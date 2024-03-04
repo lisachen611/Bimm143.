@@ -1,0 +1,115 @@
+---
+title: "Class 10: Structural Bioinformatics"
+author: "Lisa Chen PID a17082974"
+format: html
+editor: visual
+---
+
+# The PDB database
+
+Here we examine the size and composition of the main database of biomolecular structures- the PDB
+
+Get a CSV file from the PDP database and read it into the R.
+
+```{r}
+pdbstats <- read.csv("Data Export Summary.csv", row.names=1)
+head(pdbstats)
+```
+
+> Q1: What percentage of structures in the PDB are solved by X-Ray and Electron Microscopy.
+
+My pdbstats data frame has numbers with commas in them. This may cause us problems. Let's see:
+
+```{r}
+pdbstats$X.ray
+```
+
+```{r}
+as.numeric(pdbstats$X.ray)
+
+```
+
+We found a function called 'gsub()' now we can figure out how it wokrs
+
+```{r}
+x <- "22,200"
+as.numeric(gsub(",", "", x))
+```
+
+I can turn this snipet into a function that I can use for every column in this table
+
+```{r}
+commasum <- function(x) {
+  sum(as.numeric(gsub(",","",x)))
+}
+
+commasum(pdbstats$X.ray)
+```
+
+Apply across all columns
+
+```{r}
+ totals <- apply(pdbstats, 2, commasum)
+totals
+```
+
+```{r}
+round(totals/totals["Total"]*100, 2)
+```
+
+> Q2: What proportion of structures in the PDB are protein?
+
+```{r}
+(215684/249751891 *100)
+```
+
+#2 Visualizing Protein Structure
+
+We will learn the basics of Mol" (mol-star) homepage: https://molstar.org/viewer/
+
+We will play with PDB code 1HSG
+
+![](1HSG.png)
+
+![](highlightedres.png)
+
+Figure 1. HIV-1 protease structure in complex with the small molecule indinavir.
+
+##Back to R and working with PDB structures
+
+Predict the dynamics (flexibility) of an important protein
+
+```{r}
+library(bio3d)
+
+hiv <- read.pdb("1hsg")
+hiv
+```
+
+```{r}
+head(hiv$atom)
+```
+
+```{r}
+pdbseq(hiv)
+```
+
+Here we will do a Normal Mode analysis to predict functional motions of a kinase protein
+
+```{r}
+adk <- read.pdb("6s36")
+adk
+```
+
+```{r}
+modes <- nma(adk)
+plot(modes)
+```
+
+Make a "movie" called a trajectory of the predicted motions:
+
+```{r}
+mktrj(modes, file="adk_m7.pdb")
+```
+
+Then I can open this file in Mol\* ....
